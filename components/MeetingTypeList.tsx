@@ -26,52 +26,57 @@ const MeetingTypeList = () => {
 
   const [callDetails, setCallDetails] = useState<Call>();
   const { toast } = useToast();
+  
+const createMeeting = async () => {
+  if (!client || !user) {
+    toast({ title: "User not authenticated" });
+    return;
+  }
 
-  const createMeeting = async () => {
-    if (!client || !user) return;
-
-    try {
-      if (!values.dateTime) {
-        toast({
-          title: "Please select a Date and Time.",
-        });
-        return;
-      }
-
-      const id = crypto.randomUUID();
-      const call = client.call("default", id);
-
-      if (!call) throw new Error("failed to create call" || "Call not created");
-
-      const startsAt =
-        values.dateTime.toISOString() || new Date(Date.now()).toISOString();
-      const description = values.description || "Instant Meeting";
-
-      await call.getOrCreate({
-        data: {
-          starts_at: startsAt,
-          custom: {
-            description,
-          },
-        },
-      });
-
-      setCallDetails(call);
-
-      if (!values.description) {
-        router.push(`/meeting/${call.id}`);
-      }
-
-      toast({
-        title: "Meeting Created.",
-      });
-    } catch (error) {
-      console.log(error);
-      toast({
-        title: "Failed  to Create Call.",
-      });
+  try {
+    if (!values.dateTime) {
+      toast({ title: "Please select a date and time" });
+      return;
     }
-  };
+
+    const id = crypto.randomUUID();
+    const call = client.call("default", id);
+
+    if (!call) {
+      throw new Error("Failed to create meeting call");
+    }
+
+    const startsAt = values.dateTime.toISOString();
+    const description = values.description?.trim() || "Instant Meeting";
+
+    await call.getOrCreate({
+      data: {
+        starts_at: startsAt,
+        custom: {
+          description,
+        },
+      },
+    });
+
+    setCallDetails(call);
+
+    if (!values.description) {
+      router.push(`/meeting/${call.id}`);
+    }
+
+    toast({
+      title: "Meeting created successfully",
+    });
+  } catch (error) {
+    console.error("Create meeting error:", error);
+
+    toast({
+      title: "Failed to create meeting",
+      variant: "destructive",
+    });
+  }
+};
+
 
 const meetingLink = `${process.env.NEXT_PUBLIC_BASE_URL}/meeting/${callDetails?.id}`
 
